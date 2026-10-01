@@ -1,0 +1,14 @@
+{
+  "id": "/#/admin",
+  "name": "RIMSTACKLE Admin",
+  "short_name": "RIMSTACKLE Admin",
+  "description": "Ruang kerja admin RIMSTACKLE.",
+  "start_url": "/#/admin",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f3ee",
+  "theme_color": "#171a17",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

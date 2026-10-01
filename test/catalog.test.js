@@ -1,0 +1,46 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { isActive, productStatus, findProducts, lockMessage, whatsappUrl, escapeHtml, dropTitle, makeProductId, parseProductId, locationConfig, brandConfig, newestFirst } from '../src/catalog.js';
+import { products, drop } from '../src/data.js';
+
+test('catalogue discovery, visibility, expiry and WhatsApp respect sourcing rules', () => {
+  const now = Date.parse('2026-10-01T12:00:00+08:00');
+  const end = Date.parse(drop.ends_at);
+  assert.equal(isActive(drop, now), true);
+  assert.equal(isActive(drop, Date.parse(drop.starts_at) - 1), false);
+  assert.equal(isActive(drop, Date.parse(drop.starts_at)), true);
+  assert.equal(isActive(drop, end), false);
+  assert.equal(isActive({ ...drop, status: 'DRAFT' }, now), false);
+  assert.equal(dropTitle({ id: 'drop-0007' }), 'Japan Weekly Drop 7');
+  assert.equal(makeProductId('tky03', 'shi', '0125'), 'TKY03-SHI-0125');
+  assert.deepEqual(parseProductId('TKY03-SHI-0125'), { locationCode: 'TKY03', brandCode: 'SHI', idNumber: '0125' });
+  assert.ok(locationConfig.some(city => city.city === 'Tokyo' && city.sections.some(section => section.code === 'TKY03' && section.stores.length > 1)));
+  assert.ok(brandConfig.some(brand => brand.name === 'Shimano' && brand.code === 'SHI'));
+  assert.ok(newestFirst({ created_at: '2026-10-01T12:00:00Z' }, { created_at: '2026-10-01T11:00:00Z' }) < 0);
+  assert.equal(findProducts(products, drop, {}, now).length, 18);
+  assert.ok(products.every(product => product.dropId === drop.id));
+  assert.equal(findProducts(products, drop, {}, end).length, 0);
+  assert.equal(findProducts(products, drop, { q: '  antares   shimano ' }, now).length, 2);
+  assert.equal(findProducts(products, drop, { q: 'tky03-shi-0125' }, now)[0].code, 'TKY03-SHI-0125');
+  assert.equal(findProducts(products, drop, { brand: 'Shimano', category: 'Rod', condition: 'Terpakai', min: 500, max: 600, status: 'AVAILABLE' }, now).length, 1);
+  assert.equal(findProducts(products, drop, { brand: 'Abu Garcia' }, now).length, 0);
+  assert.equal(findProducts(products, drop, { min: 9000, max: 1 }, now).length, 0);
+  const sorted = findProducts(products, drop, { sort: 'price-asc' }, now);
+  assert.ok(sorted.every((item, index) => !index || sorted[index - 1].price <= item.price));
+  assert.equal(productStatus(products[0], drop, end), 'EXPIRED');
+  assert.equal(productStatus(products.find(product => product.status === 'DRAFT'), drop, end), 'DRAFT');
+  const before = JSON.stringify(products[0]);
+  const message = lockMessage(products[0]);
+  assert.ok(message.includes('TKY03-SHI-0125'));
+  assert.ok(message.includes('RM1,850'));
+  const link = new URL(whatsappUrl('+60 17-579 9853', message));
+  assert.equal(link.pathname, '/60175799853');
+  assert.equal(link.searchParams.get('text'), message);
+  assert.equal(JSON.stringify(products[0]), before, 'LOCK must never reserve an item');
+  assert.equal(whatsappUrl('', message), null);
+  assert.equal(whatsappUrl('javascript:alert(1)', message), null);
+  assert.equal(escapeHtml('<img onerror="bad">'), '&lt;img onerror=&quot;bad&quot;&gt;');
+  assert.equal(new Set(products.map(product => product.code)).size, products.length);
+  assert.ok(products.every(product => !['japan_price', 'store_name', 'store_address', 'internal_notes'].some(field => field in product)));
+});
+

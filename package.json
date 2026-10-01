@@ -1,0 +1,30 @@
+{
+  "name": "rimstackle",
+  "version": "1.0.0",
+  "description": "RIMSTACKLE mobile-first Japanese tackle sourcing catalogue",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amnhmb/rimstackle.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/amnhmb/rimstackle/issues"
+  },
+  "homepage": "https://github.com/amnhmb/rimstackle#readme",
+  "devDependencies": {
+    "vite": "^8.3.1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2"
+  }
+}
